@@ -1,8 +1,4 @@
 [![CircleCI](https://circleci.com/gh/Jtheowl/discord-EGbot.svg?style=shield&circle-token=de715f375b3a6b4788f9cb094ffbccba0713f925)](https://circleci.com/gh/Jtheowl/discord-EGbot)
-
-Private repository for the multi-purpose dual Discord bot system. 
-
-
 ## Introduction
 Kaede and Yoshimura are two personalized bots that work together in offering a variety of features and enhancements, tailored towards art communities. Kaede is more friendly and mostly has social and user-centric features/responsibilities, while Yoshimura handles more backend and data collection and processing responsibilities.
 
