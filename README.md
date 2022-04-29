@@ -1,5 +1,3 @@
-# discord-art-bots (Kaede & Yoshimura)
-
 [![CircleCI](https://circleci.com/gh/Jtheowl/discord-EGbot.svg?style=shield&circle-token=de715f375b3a6b4788f9cb094ffbccba0713f925)](https://circleci.com/gh/Jtheowl/discord-EGbot)
 
 Private repository for the multi-purpose dual Discord bot system. 
