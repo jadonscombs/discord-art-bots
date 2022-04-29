@@ -1,0 +1,157 @@
+import discord
+from discord.ext import commands
+from cogs.globalcog import GlobalCog
+import emojis
+import random
+import traceback
+import typing
+from utils.async_utils import react_success, react_fail
+
+
+class Fun(commands.Cog, GlobalCog):
+    """Miscellaneous fun/novelty commands."""
+
+    def __init__(self, bot):
+        self.bot = bot
+        self.acc = GlobalCog.accessor_mirror
+
+    # - - - - - - - - - - - -
+    # STARBOARD COMMAND [TODO]
+    # - - - - - - - - - - - -
+
+    @commands.command("streamnotifs")
+    @commands.guild_only()
+    @commands.cooldown(3, 5, commands.BucketType.user)
+    @GlobalCog.set_clearance(1)
+    async def streamnotifs(self, ctx, choice: str):
+        """
+        Enable/Disable notifications for when someone in the server goes LIVE (default = off)
+
+        <choice>:   on/off
+        """
+        if (len(choice) > 4) or choice.lower() not in ("on", "off"):
+            return
+
+        try:
+            role = self.acc.fetch_role(
+                "streamnotif", str(ctx.guild.id), ctx.message.guild
+            )
+            if role:
+                if choice == "on":
+                    await ctx.author.add_roles(role)
+                else:
+                    await ctx.author.remove_roles(role)
+                await react_success(ctx)
+
+        except:
+            traceback.print_exc()
+
+    @commands.command("star", aliases=["givestar", "givecoffee", "coffee"])
+    @commands.guild_only()
+    @commands.cooldown(1, 43200, commands.BucketType.member)
+    @GlobalCog.set_clearance(1)
+    async def give_star(self, ctx, recipient: discord.Member):
+        """
+        Gives the <recipient> a little bundle of points. Can only be used once per X hours.
+
+        <recipient>:    an @mention, userID, or the format RandomUser#2531
+        """
+        # side note: 12 hours = (12 * 3600) seconds = 43200 seconds
+        try:
+            default_points_award = 25
+
+            # getting target user (the <recipient>)
+            if recipient == "self":
+                return await react_fail(ctx)
+
+            if recipient == self.bot.user:
+                msg = (
+                    "Oh, thank you! :smiling_face_with_3_hearts: "
+                    "But I cannot accept, I am just a bot :yum:"
+                )
+                return await ctx.reply(msg)
+
+            # give points to <recipient> now
+            self.acc.ub_addpoints(
+                None,
+                None,
+                "Used the 'star' command (cooldown 12hrs).",
+                bank_amount=default_points_award,
+                member=recipient,
+            )
+
+            # react w/emoji to confirm
+            await ctx.message.add_reaction(list(emojis.get(emojis.encode(":gift:")))[0])
+        except:
+            traceback.print_exc()
+            await react_fail(ctx)
+            ctx.command.reset_cooldown(ctx)
+
+    @commands.command("gift")
+    @commands.guild_only()
+    @commands.cooldown(1, 120, commands.BucketType.user)
+    @GlobalCog.set_clearance(1)
+    async def give_gift(self, ctx, recipient: discord.Member, amount: float, *, gift):
+        """
+        Give <recipient> a gift of your choice!
+
+        Example usage:
+            >>gift @Saul 2 :chicken:
+            >>gift UserName#8821 5 kisses
+            >>gift @Alice 49 icecream
+        """
+        try:
+            # temporary disable/public notif. of command's status
+            raise commands.CommandError("Command not available yet. Coming soon!")
+
+            if recipient.bot:
+                return
+
+            # just return; points cannot be directly gifted yet
+            if gift.lower() in ("points", "point"):
+                embed = discord.Embed(
+                    description="Point gifting not available yet. Wait for it in a future update!",
+                    colour=discord.Colour.red(),
+                )
+                reply = await ctx.reply(embed=embed)
+
+            await react_success(ctx)
+
+        except:
+            traceback.print_exc()
+            await react_fail(ctx)
+            ctx.command.reset_cooldown(ctx)
+
+    @commands.command("roll")
+    @commands.guild_only()
+    @commands.cooldown(10, 9, commands.BucketType.user)
+    @GlobalCog.set_clearance(1)
+    async def roll(self, ctx, sides: typing.Optional[int] = 6):
+        """
+        Roll dice, return a number (default: 6-sided). Sides can be [1 - 500].
+
+        Usage:
+        !roll
+        !roll 3
+        !roll 48
+        """
+
+        # max_sides = 500
+        if abs(sides) < 500:
+            num = random.randint(1, abs(sides))
+            await ctx.reply(f"You rolled {num}")
+
+
+""" ======================= COGLOADING + MAIN ====================== """
+
+
+def setup(bot):
+    bot.add_cog(Fun(bot))
+    print("[fun] cog loaded!")
+
+
+if __name__ == "__main__":
+    try:
+        print("Loading fun cog!")
+    except:
+        traceback.print_exc()

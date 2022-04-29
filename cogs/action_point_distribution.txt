@@ -1,0 +1,8 @@
+text,1.0
+text_med,2.0
+text_long,3.0
+emote,2.0
+image,5.0
+video_upload,7.0
+url,3.0
+reaction,0.5

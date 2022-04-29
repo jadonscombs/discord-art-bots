@@ -1,0 +1,2 @@
+every,day,at,17:00:00,do,do_func,True,dailycat
+every,day,at,17:15:00,do,do_func,True,dailyowl
