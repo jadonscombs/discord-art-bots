@@ -1,0 +1,58 @@
+# discord-art-bots (Kaede & Yoshimura)
+
+[![CircleCI](https://circleci.com/gh/Jtheowl/discord-EGbot.svg?style=shield&circle-token=de715f375b3a6b4788f9cb094ffbccba0713f925)](https://circleci.com/gh/Jtheowl/discord-EGbot)
+
+Private repository for the multi-purpose dual Discord bot system. 
+
+
+## Introduction
+Kaede and Yoshimura are two personalized bots that work together in offering a variety of features and enhancements, tailored towards art communities. Kaede is more friendly and mostly has social and user-centric features/responsibilities, while Yoshimura handles more backend and data collection and processing responsibilities.
+
+An integral part of many of these bots' features is the use of a locally maintained **database**. Some features can work without it, **others require it** for you and your (art) community to experience non-limited functionality and features.
+
+
+&nbsp;
+## Quick Start
+Follow the steps below to deploy these two friendly, community-oriented Discord bots.
+
+#### 1. You must create a `bot_token.json` file in the root directory of this project (`discord-EGbot/`) with the following contents:
+```
+{ 
+     "Kaede":     "<discord token for bot 1>",
+     "Yoshimura": "<discord token for bot 2>"
+}
+ ```
+The names "Kaede" and "Yoshimura" are required for now. Just replace `<discord token for bot X>` with the bot token for your associated Discord bot 1 and 2.
+
+#### 2. Start up the main scripts: `yoshimura.py` first, then `kaede.py`
+Warning: `kaede.py` can _update_ a database, but will not _create_ a database if it does not exist. `yoshimura.py` will automatically create a database as needed if one does not already exist, as long as `yoshimura.py` is active.
+
+#### 3. You're all set!
+Technically the bots work, but some custom configuration via the bot commands will be needed to unlock full functionality (e.g. custom "designation zones" that are needed for things like automated user verification or channel-based point system features). See the **"Configuration"** section below.
+
+
+&nbsp;
+## Configuration
+Before using any of the help commands, _please execute the following commands_ within your server, so the bots do not give a duplicate response to the same command:
+```
+@your_kaede_bot prefix k!
+@your_yoshimura_bot prefix y!
+```
+This will give your Yoshimura bot the `y!` command prefix, and your Kaede bot the `k!` command prefix.
+
+(replace "`your_kaede_bot`"/"`your_yoshimura_bot`" with the mention(s) for the bots you assigned to Kaede and Yoshimura)
+
+\
+Another key component that these bots rely on is the use of _designation zones._ Designation zones are specific pre-defined "labels" or categories that you assign to channels in your discord server. For example, if you want to designate a `#text-4-stream` channel to receive "Discord stream notifications" you would execute the following command (`dzone set`) using Yoshimura's prefix (`y!`):
+```
+y!dzone set stream_text #text-4-stream
+```
+
+Once you do this, the bots will send a message in `#text-4-stream` when someone starts streaming in one of the voice channels you have.
+
+To see _all_ designation zones that you can assign--including the essential and mandatory ones--use the following command:
+```
+y!dzone list
+```
+
+**RECOMMENDED: Use the `y!help` or `k!help` to explore bot features and configurations. More help information here coming soon!**

@@ -1,0 +1,16 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+"discord.py" = "~=1.7.1"
+emojis = "~=0.6.0"
+praw = "~=7.2.0"
+schedule = "~=1.1.0"
+
+[dev-packages]
+black = "*"
+
+[pipenv]
+allow_prereleases = true
