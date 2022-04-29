@@ -31,16 +31,17 @@ Technically the bots work, but some custom configuration via the bot commands wi
 
 &nbsp;
 ## Configuration
-Before using any of the help commands, _please execute the following commands_ within your server, so the bots do not give a duplicate response to the same command:
+By default, you can access _Kaede's_ help information with the `!help` command, and _Yoshimura's_ help information with the `+help` command.
+If you would like to change the command prefixes for either bot (default: "!" for Kaede, "+" for Yoshimura), use the following command and replace `NEW_PREFIX` with the prefix you want:
 ```
-@your_kaede_bot prefix k!
-@your_yoshimura_bot prefix y!
+@your_kaede_bot prefix NEW_PREFIX
+@your_yoshimura_bot prefix NEW_PREFIX
 ```
-This will give your Yoshimura bot the `y!` command prefix, and your Kaede bot the `k!` command prefix.
 
 (replace "`your_kaede_bot`"/"`your_yoshimura_bot`" with the mention(s) for the bots you assigned to Kaede and Yoshimura)
 
-\
+
+#### Designation Zones
 Another key component that these bots rely on is the use of _designation zones._ Designation zones are specific pre-defined "labels" or categories that you assign to channels in your discord server. For example, if you want to designate a `#text-4-stream` channel to receive "Discord stream notifications" you would execute the following command (`dzone set`) using Yoshimura's prefix (`y!`):
 ```
 y!dzone set stream_text #text-4-stream
