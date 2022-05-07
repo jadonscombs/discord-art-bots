@@ -44,13 +44,13 @@ content = ""
 # list of cogs/extensions
 ext_list = [
     "cogs.userdata_accessor",
-    "cogs.yoshimura.info",
-    "cogs.yoshimura.yoshimura_utility",
+    "cogs.info",
+    "cogs.yoshimura_utility",
     "cogs.task_scheduler",
     "cogs.misc_shared",
     "cogs.transactions",
     "cogs.verification",
-    "cogs.point_system",
+    "cogs.point_system"
 ]
 
 # accessor object for sqlite data retrieval

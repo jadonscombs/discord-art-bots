@@ -44,12 +44,12 @@ content = ""
 # list of cogs/extensions (e.g. markov.py, utility.py)
 ext_list = [
     "cogs.userdata_accessor",
-    "cogs.kaede.kaede_utility",
-    "cogs.kaede.fun",
+    "cogs.kaede_utility",
+    "cogs.fun",
     "cogs.misc_shared",
     "cogs.messaging",
     "cogs.selection",
-    "cogs.statistics",
+    "cogs.statistics"
 ]
 
 # accessor object for sqlite data retrieval
