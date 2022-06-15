@@ -19,17 +19,14 @@ class PointSystem(commands.Cog, GlobalCog):
     def __init__(self, bot):
         self.bot = bot
 
-    # NOTE: DON'T THINK I NEED A COMMAND!
-    # @commands.command("some_command")
-    # @commands.cooldown(2, 5, commands.BucketType.member)
-    # @commands.has_role(roles.VERIFIED_MEMBER)
-    # @GlobalCog.no_points()
-    # async def some_command(self, ctx, message: typing.Optional[discord.Message]):
-    #    pass
-
     # EVENT LISTENER: stream points
     @commands.Cog.listener()
-    async def on_voice_state_update(self, prev, curr):
+    async def on_voice_state_update(
+        self,
+        member: discord.Member,
+        prev: discord.VoiceState,
+        curr: discord.VoiceState
+    ):
         pass
 
     # EVENT LISTENER: on_message
@@ -38,10 +35,13 @@ class PointSystem(commands.Cog, GlobalCog):
         """
         Main event listener for ON_MESSAGE events (+ parsing messages).
         """
-
+        
+        # do not proceed if action issuer is bot
+        if message.author.bot:
+            return
+        
         # ACTION: AWARD MESSAGE POINTS
         try:
-            print("about to award on_message points")
 
             # if unable to award art-posting or reply-to-art points,
             # award normal points
@@ -49,7 +49,6 @@ class PointSystem(commands.Cog, GlobalCog):
                 self.award_art_message_points(message)
                 or self.award_art_reply_points(message)
             ):
-                print("neither art_message/reply routes worked")
                 self.award_message_points(message)
         except:
             traceback.print_exc()
@@ -74,9 +73,12 @@ class PointSystem(commands.Cog, GlobalCog):
         Main event listener for REACTION_ADD events.
         """
 
+        # do not proceed if action issuer is bot
+        if self.bot.get_user(payload.user_id).bot:
+            return
+        
         # ACTION: AWARD REACTION POINTS
         try:
-
             # if unable to award art-specific reaction points to author,
             # award normal reaction points to author
             if not await self.award_art_reaction_points(payload):
@@ -149,7 +151,7 @@ class PointSystem(commands.Cog, GlobalCog):
         # ERROR: if bad or nonexistent response, raise exception
         if (not resp) or (not resp.ok):
             raise RuntimeError(
-                "HTTP response error while attempting " "to award server boost points."
+                "HTTP response error while attempting to award server boost points."
             )
 
         # successful response: edit the bot's sent msg to
@@ -170,7 +172,6 @@ class PointSystem(commands.Cog, GlobalCog):
         # print("in award_art_message_points()")
 
         uda = self.bot.get_cog("UserDataAccessor")
-
         if uda is None:
             print(
                 ("[point_system] ERROR: UDA is None. " "Could not give MESSAGE points.")
@@ -179,24 +180,26 @@ class PointSystem(commands.Cog, GlobalCog):
 
         gid = str(message.guild.id)
         chid = str(message.channel.id)
-
+        
         # only award art points if channel is "art_zone"
-        if (
-            uda.is_channel("art_zone", gid, chid)
-            and (len(message.attachments) > 0)
-            and (
-                "image" in message.attachments[0].content_type
-                or "video" in message.attachments[0].content_type
-            )
-        ):
-
-            # DEBUG
-            # print("proceeding to award art zone message points")
-
+        truth_table = {
+            uda.is_channel("art_zone", gid, chid),
+            len(message.attachments) > 0 and
+            any([typ in message.attachments[0].content_type for typ in {"image", "video"}])
+        }
+        
+        if (all(truth_table)):
+            
             # posting art gives you a (FACTOR) point multiplier of 2x
             FACTOR = 2.0
+            
             awarded_pts = FACTOR * uda.distributor.get_embed_points(
-                message, uda.pt_flags
+                message.embeds, uda.pt_flags
+            )
+            
+            # getting points for attachments (non-embed)
+            awarded_pts += uda.distributor.get_attachment_points(
+                message.attachments, uda.pt_flags
             )
 
             # award the points
@@ -208,10 +211,7 @@ class PointSystem(commands.Cog, GlobalCog):
                 member=message.author,
             )
 
-            # print("award_art_message success")
             return True
-
-        # print("award_art_message fail")
         return False
 
     async def award_art_reaction_points(self, payload):
@@ -220,8 +220,6 @@ class PointSystem(commands.Cog, GlobalCog):
 
         Returns True if success, else False.
         """
-
-        # print("in award_art_reaction_points()")
 
         uda = self.bot.get_cog("UserDataAccessor")
 
@@ -250,13 +248,6 @@ class PointSystem(commands.Cog, GlobalCog):
             else False
         )
 
-        # print("[award_art_reaction_points] tests:")
-        # print(
-        #    f"is art zone: {res_1}"
-        #    f"has embed: {res_2}"
-        #    f"is image or video: {res_3}"
-        # )
-
         if (
             uda.is_channel("art_zone", gid, chid)
             and (len(message.attachments) > 0)
@@ -265,9 +256,6 @@ class PointSystem(commands.Cog, GlobalCog):
                 or "video" in message.attachments[0].content_type
             )
         ):
-
-            # DEBUG
-            # print("proceeding to award art zone reaction points")
 
             # get num. points allowed per user reaction
             FACTOR = 2.0
@@ -369,12 +357,10 @@ class PointSystem(commands.Cog, GlobalCog):
             if uda:
                 uda.givepoints(message)
             else:
-                print(
-                    (
-                        "[point_system] ERROR: UDA is None. "
-                        "Could not give MESSAGE points."
-                    )
-                )
+                print((
+                    "[point_system] ERROR: UDA is None. "
+                    "Could not give MESSAGE points."
+                ))
 
     # (method) ON_RAW_REACTION_ADD POINT AWARDING
     async def award_reaction_points(

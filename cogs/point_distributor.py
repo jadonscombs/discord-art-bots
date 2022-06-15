@@ -193,17 +193,20 @@ class Distributor(commands.Cog):
 
         return 0.0
 
-    # def find_num_emojis(self, txt_msg: str, custom=False):
-    # '''
-    # Return number of emojis found in string;
-    # Source: https://stackoverflow.com/questions/54859876/
-    # how-check-on-message-if-message-has-emoji-for-discord-py
-    # '''
-    # emojis = None
-    # if custom: emojis = re.findall(r'<:\w\w*:\d*>', txt_msg)
-    # else: emojis = re.findall(r':\w\w*:', txt_msg)
-
-    # return len(emojis)
+    
+    def get_attachment_points(self, attachments, flags):
+        """
+        Return points based on # of attachments found in msg.
+        
+        Currently does not stack points for multiple attachments.
+        Currently awards image-based points, regardless of image or video.
+        """
+        
+        # check if attachments are present
+        if (attachments is not None) and (len(attachments) > 0):
+            return self.flag_switch("image", flags["IMAGE"])
+        return 0.0
+    
 
     def get_embed_points(self, embeds, flags):
         """
