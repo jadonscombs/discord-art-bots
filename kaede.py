@@ -1,29 +1,24 @@
+from cogs.userdata_accessor import UserDataAccessor
+from discord.ext import commands
+from utils.custom_help_command import CustomHelpCommand
+from utils.sync_utils import create_prefixes_file, get_prefix
 import asyncio
-import functools
 import blop_tknloader as tknloader
 import datetime
 import discord
-from discord.ext import commands
+import functools
 import json
-import traceback
+import logging
 import os
 import platform
 import sys
-from cogs.userdata_accessor import UserDataAccessor
-import logging
-
-from utils.custom_help_command import CustomHelpCommand
-from utils.sync_utils import create_prefixes_file, get_prefix
-
-sys.path.append(os.path.join(os.getcwd(), "cogs"))
+import traceback
 
 # if needed, set Win. policy (global per-process event loop manager);
 # see more: https://docs.python.org/3.7/library/asyncio-policy.html
 # note: fixes error(s) when restarting the bot
 if platform.system() == "Windows":
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-
-# import cogs.task_scheduler
 
 # setting new "Intents" variables
 intents = discord.Intents.default()
@@ -33,12 +28,14 @@ intents.voice_states = True
 
 # setting some bot properties
 bot = commands.Bot(
-    command_prefix=get_prefix, intents=intents, help_command=CustomHelpCommand()
+    command_prefix=get_prefix,
+    intents=intents,
+    help_command=CustomHelpCommand()
 )
 content = ""
 
 # list of cogs/extensions (e.g. markov.py, utility.py)
-ext_list = [
+ext_list = {
     "cogs.userdata_accessor",
     "cogs.kaede_utility",
     "cogs.fun",
@@ -46,7 +43,7 @@ ext_list = [
     "cogs.messaging",
     "cogs.selection",
     "cogs.statistics"
-]
+}
 
 # accessor object for sqlite data retrieval
 accessor = None
@@ -54,7 +51,7 @@ accessor = None
 # loop for point giving in 'on_message()'
 loop = asyncio.get_event_loop()
 
-# adding pre-compiled 'asyncio.coroutine' method for on_message() use
+# adding pre-compiled method declarations/vars
 coroutine = asyncio.coroutine
 escape_markdown = discord.utils.escape_markdown
 run_in_executor = loop.run_in_executor
@@ -67,14 +64,11 @@ designation_is_set = None
 get_designation_channel_id = None
 
 
-# tracking time-based variables (place somewhere else later)
-# accessor.last_member_update = datetime.datetime.now()
-
-# setup logging
+# setup event log for kaede
 logger = logging.getLogger("kaede")
 
+
 if __name__ == "__main__":
-    # print(os.getcwd())    # DIAGNOSTIC LINE
 
     for ext in ext_list:
         try:
@@ -92,14 +86,12 @@ if __name__ == "__main__":
     designation_is_set = accessor.designation_is_set
     get_designation_channel_id = accessor.get_designation_channel_id
 
-"""============================================================================"""
-
 
 @bot.event
 async def on_ready():
     activity = discord.Game(name=f"@{bot.user.name} prefix!")
     await bot.change_presence(activity=activity, status=discord.Status.online)
-    print("{}#{} is online now.".format(bot.user.name, bot.user.discriminator))
+    print(f"{bot.user.name}#{bot.user.discriminator} is online now.")
 
 
 @bot.event
@@ -151,7 +143,10 @@ async def on_guild_remove(guild):
 async def on_message(message):
 
     # soft-lock on Kaede; Kaede must wait for the DB to be created
-    if (message.guild is not None) and (not accessor.db_exists(str(message.guild.id))):
+    if (
+        (message.guild is not None) and 
+        (not accessor.db_exists(str(message.guild.id)))
+    ):
         return
 
     # yield for process-heavy activity
@@ -159,13 +154,16 @@ async def on_message(message):
         return
 
     # do not process commands if bot is 'disabled';
-    # only process if command is possibly <!enable>
+    # only process if command is <!enable>
     if accessor.disabled:
-        if (len(message.clean_content.split()) == 1) and ("enable" in message.content):
+        if (
+            (len(message.clean_content.split()) == 1) and
+            ("enable" in message.content)
+        ):
             await bot.process_commands(message)
 
     if message.author.bot:
-        # TODO: put extra logic here for kaede/yoshimura
+        # ignore command error msg. to avoid bandwidth pollution
         if message.content.find("No command called") != -1:
             try:
                 await message.delete()
@@ -174,19 +172,17 @@ async def on_message(message):
         return
 
     # retrieving guildID and userID
-    gid = ""
-    if isinstance(message.channel, discord.channel.TextChannel):
-        gid = str(message.guild.id)
     uid = str(message.author.id)
-
-    # initialize user if not added to db yet
-    if not accessor.checking_user:
-        accessor.checking_user = True
-        accessor.check_user(gid, uid)
-        accessor.checking_user = False
-    else:
-        # give time for checking_user process to finish
-        await asyncio.sleep(0.3)
+    if message.guild is not None:
+        gid = str(message.guild.id)
+        
+        # if system is NOT checking user's entry in DB...
+        if not accessor.checking_user:
+        
+            # attempt to add DB entry for user
+            accessor.check_user(gid, uid)
+        else:
+            await asyncio.sleep(0.3)
 
     # processing commands
     try:
@@ -199,11 +195,10 @@ async def on_message(message):
 @bot.event
 async def on_member_join(member):
     """
-    The primary action for Kaede is to:
-        - send a DM to user on how to get started
-        - TBD?
+    Actions to take when new user joins the servers.
     """
     try:
+        # send user a welcome message with verification instructions
         await accessor.kaede_entrance_routine(member)
     except:
         traceback.print_exc()
@@ -214,7 +209,6 @@ async def on_reaction_add(reaction, user):
     """
     Several actions may occur when a reaction is detected.
     """
-    # gid = str(reaction.message.guild.id)
     pass
 
 

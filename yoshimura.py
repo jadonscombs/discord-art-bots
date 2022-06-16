@@ -1,20 +1,17 @@
+from cogs.userdata_accessor import UserDataAccessor
+from discord.ext import commands
+from utils.custom_help_command import CustomHelpCommand
+from utils.sync_utils import create_prefixes_file, get_prefix
 import asyncio
-import functools
 import blop_tknloader as tknloader
 import discord
-from discord.ext import commands
+import functools
 import json
-import traceback
+import logging
 import os
 import platform
 import sys
-from cogs.userdata_accessor import UserDataAccessor
-import logging
-
-from utils.custom_help_command import CustomHelpCommand
-from utils.sync_utils import create_prefixes_file, get_prefix
-
-sys.path.append(os.path.join(os.getcwd(), "cogs"))
+import traceback
 
 # if needed, set Win. policy (global per-process event loop manager);
 # see more: https://docs.python.org/3.7/library/asyncio-policy.html
@@ -37,7 +34,7 @@ bot = commands.Bot(
 content = ""
 
 # list of cogs/extensions
-ext_list = [
+ext_list = {
     "cogs.userdata_accessor",
     "cogs.info",
     "cogs.yoshimura_utility",
@@ -46,7 +43,7 @@ ext_list = [
     "cogs.transactions",
     "cogs.verification",
     "cogs.point_system"
-]
+}
 
 # accessor object for sqlite data retrieval
 accessor = None
@@ -54,8 +51,7 @@ accessor = None
 # loop for point giving in 'on_message()'
 loop = asyncio.get_event_loop()
 
-# adding pre-compiled 'asyncio.coroutine' method
-# (and others) for on_message() use
+# adding pre-compiled method declarations/vars
 coroutine = asyncio.coroutine
 escape_markdown = discord.utils.escape_markdown
 run_in_executor = loop.run_in_executor
@@ -68,14 +64,11 @@ get_designation_channel_id = None
 is_channel = None
 
 
-# tracking time-based variables (place somewhere else later)
-# accessor.last_member_update = datetime.datetime.now()
-
 # setup event log for yoshimura
 logger = logging.getLogger("yoshimura")
 
+
 if __name__ == "__main__":
-    # print(os.getcwd())    # DIAGNOSTIC LINE
 
     for ext in ext_list:
         try:
@@ -94,14 +87,11 @@ if __name__ == "__main__":
     is_channel = accessor.is_channel
 
 
-"""============================================================================"""
-
-
 @bot.event
 async def on_ready():
     activity = discord.Game(name=f"@{bot.user.name} prefix!")
     await bot.change_presence(activity=activity, status=discord.Status.online)
-    print("{}#{} is online now.".format(bot.user.name, bot.user.discriminator))
+    print(f"{bot.user.name}#{bot.user.discriminator} is online now.")
 
 
 @bot.event
@@ -152,13 +142,16 @@ async def on_message(message):
         return
 
     # do not process commands if bot is 'disabled';
-    # only process if command is possibly <!enable>
+    # only process if command is <!enable>
     if accessor.disabled:
-        if (len(message.clean_content.split()) == 1) and ("enable" in message.content):
+        if (
+            (len(message.clean_content.split()) == 1) and
+            ("enable" in message.content)
+        ):
             await bot.process_commands(message)
 
     if message.author.bot:
-        # TODO: put extra logic here for kaede/yoshimura
+        # ignore command error msg. to avoid bandwidth pollution
         if message.content.find("No command called") != -1:
             try:
                 await message.delete()
@@ -166,20 +159,18 @@ async def on_message(message):
                 pass
         return
 
-    is_guild = message.guild is not None
-
     # retrieving guildID and userID
-    gid = None
-    if is_guild:
-        gid = str(message.guild.id)
     uid = str(message.author.id)
-
-    # initialize user if not added to db yet
-    if is_guild and not accessor.checking_user:
-        accessor.check_user(gid, uid)
-    else:
-        # give time for checking_user process to finish
-        await asyncio.sleep(0.3)
+    if message.guild is not None:
+        gid = str(message.guild.id)
+        
+        # if system is NOT checking user's entry in DB...
+        if not accessor.checking_user:
+        
+            # attempt to add DB entry for user
+            accessor.check_user(gid, uid)
+        else:
+            await asyncio.sleep(0.3)
 
     # processing commands
     try:
@@ -187,13 +178,6 @@ async def on_message(message):
             await bot.process_commands(message)
     except:
         return
-
-    # COMMENTED OUT FOR POINT_SYSTEM
-    # giving points
-    # try:
-    #    if not bot.is_closed():
-    #        await run_in_executor(None, partial(givepoints, message))
-    # except: traceback.print_exc()
 
     # terminal update (stats on the message author)
     if is_guild:
@@ -203,15 +187,11 @@ async def on_message(message):
 @bot.event
 async def on_member_join(member):
     """
-    The primary action here is to:
-        - create database entry for the new member
-        - add member to a list of UNVERIFIED users
-        - ALSO: update join rate??
+    Actions to take when new user joins the servers.
     """
     try:
-        # [YOSHIMURA ACTION] add user to the database (and unverified list)
+        # [YOSHIMURA ACTION] create new DB entry for user
         accessor.ADD_USER(str(member.guild.id), str(member.id))
-
     except:
         traceback.print_exc()
 
@@ -222,38 +202,22 @@ async def on_raw_reaction_add(payload):
     Several actions may occur when a reaction is detected.
     """
 
-    if payload.guild_id:
-        gid = str(payload.guild_id)
     uid = str(payload.user_id)
     if payload.guild_id:
+        gid = str(payload.guild_id)
         guild = bot.get_guild(payload.guild_id)
     if payload.member:
         member = payload.member
 
-    # [YOSHIMURA ACTION][LAST ACTION TO OCCUR FOR THE <on_raw_reaction_add()> EVENT]
     # give user points for adding a reaction
     if not guild:
         guild = bot.get_guild(payload.guild_id)
-
     if not member:
         member = guild.get_member(payload.user_id)
 
+    # add member to DB if they're not already in
     if not member.bot:
-
-        # add member to DB if they're not already in
         accessor.check_user(gid, uid)
-
-        # COMMENTED OUT FOR POINT_SYSTEM
-        # give user xp/points for reaction
-        # reaction_points = get_reaction_points()
-        # update("add", reaction_points, "xp", None, member=member)
-        # accessor.ub_addpoints(
-        #    None,
-        #    None,
-        #    "Points for reaction add.",
-        #    bank_amount=reaction_points,
-        #    member=member
-        # )
 
 
 @bot.event
@@ -271,12 +235,9 @@ async def on_member_remove(member):
     """
     # TODO: -->  decide if/what member stats get deleted from database,
     #           as well as how leave/join rate are affected (server stat)
-    try:
-        if member.bot:
-            return
-    except:
-        traceback.print_exc()
-
+    if member.bot:
+        return
+        
     accessor.DELETE_USER(str(member.guild.id), str(member.id))
 
 
