@@ -9,21 +9,17 @@ import traceback
 import os
 import platform
 import sys
-import cogs.userdata_accessor
 from cogs.userdata_accessor import UserDataAccessor
-import time
-import emojis
 import logging
 
 from utils.custom_help_command import CustomHelpCommand
-from utils.async_utils import react_success, react_fail
-from utils.sync_utils import create_prefixes_file, get_prefix, get_prefix_str
+from utils.sync_utils import create_prefixes_file, get_prefix
 
 sys.path.append(os.path.join(os.getcwd(), "cogs"))
 
-# experimental(?):
-#   - supposedly a fix to error(s) when trying to restart bot
-#   - the <misc_shared> module has this command
+# if needed, set Win. policy (global per-process event loop manager);
+# see more: https://docs.python.org/3.7/library/asyncio-policy.html
+# note: fixes error(s) when restarting the bot
 if platform.system() == "Windows":
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
@@ -241,23 +237,26 @@ async def on_member_remove(member):
 
 
 @bot.event
-async def on_voice_state_update(member, prev, cur):
+async def on_voice_state_update(
+    member: discord.Member,
+    prev: discord.VoiceState,
+    curr: discord.VoiceState):
     """
     Called when there's an update in voice channel activity
     Currently, this event is used for the "!streamnotifs <on/off>" cmd
     """
     # print('[voice update] truth tables:')
     # print(f'\t>prev: stream={prev.self_stream}; connected={prev.channel}')
-    # print(f'\t>cur: stream={cur.self_stream}; connected={cur.channel}')
+    # print(f'\t>curr: stream={curr.self_stream}; connected={curr.channel}')
 
     # ======================= stream-related handling logic =======================
     # =========== logic for notifying users when someone goes LIVE ================
 
     # if user started streaming AND they did not channel hop
     if (
-        cur.self_stream and (prev.self_stream != cur.self_stream)
+        curr.self_stream and (prev.self_stream != curr.self_stream)
     ) and (  # user went !LIVE!
-        (prev.channel is None) or (prev.channel == cur.channel)
+        (prev.channel is None) or (prev.channel == curr.channel)
     ):
         # see if anyone's (@streamnotif) subscribed to notifs first...
         notif_role = discord.utils.get(member.guild.roles, name="streamnotif")
@@ -306,8 +305,8 @@ async def on_voice_state_update(member, prev, cur):
     # ============ LOGIC FOR UPDATING USER STREAM TIME ================
     # >>>   this section aims to track user's *total* streaming time
     #       when user STOPS streaming/going LIVE.
-    if (not cur.self_stream and prev.self_stream) or (
-        cur.self_stream and not cur.channel
+    if (not curr.self_stream and prev.self_stream) or (
+        curr.self_stream and not curr.channel
     ):
         try:
             # get most recent stream "live" time, and stream "end" time

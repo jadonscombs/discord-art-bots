@@ -1,7 +1,6 @@
 import asyncio
 import functools
 import blop_tknloader as tknloader
-import datetime
 import discord
 from discord.ext import commands
 import json
@@ -9,25 +8,19 @@ import traceback
 import os
 import platform
 import sys
-import cogs.userdata_accessor
 from cogs.userdata_accessor import UserDataAccessor
-import time
-import emojis
 import logging
 
 from utils.custom_help_command import CustomHelpCommand
-from utils.async_utils import react_success, react_fail
-from utils.sync_utils import create_prefixes_file, get_prefix, get_prefix_str
+from utils.sync_utils import create_prefixes_file, get_prefix
 
 sys.path.append(os.path.join(os.getcwd(), "cogs"))
 
-# experimental(?):
-#   - supposedly a fix to error(s) when trying to restart bot
-#   - the <misc_shared> module has this command
+# if needed, set Win. policy (global per-process event loop manager);
+# see more: https://docs.python.org/3.7/library/asyncio-policy.html
+# note: fixes error(s) when restarting the bot
 if platform.system() == "Windows":
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
-
-# import cogs.task_scheduler
 
 # setting new "Intents" variables
 intents = discord.Intents.default()
@@ -37,7 +30,9 @@ intents.voice_states = True
 
 # setting some bot properties
 bot = commands.Bot(
-    command_prefix=get_prefix, intents=intents, help_command=CustomHelpCommand()
+    command_prefix=get_prefix,
+    intents=intents,
+    help_command=CustomHelpCommand()
 )
 content = ""
 
@@ -76,7 +71,7 @@ is_channel = None
 # tracking time-based variables (place somewhere else later)
 # accessor.last_member_update = datetime.datetime.now()
 
-# setup logging
+# setup event log for yoshimura
 logger = logging.getLogger("yoshimura")
 
 if __name__ == "__main__":
@@ -85,7 +80,7 @@ if __name__ == "__main__":
     for ext in ext_list:
         try:
             bot.load_extension(ext)
-        except Exception as e:
+        except Exception:
             print("[main] error loading {} extension.".format(ext))
             traceback.print_exc()
 
