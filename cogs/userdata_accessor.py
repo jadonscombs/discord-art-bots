@@ -56,7 +56,7 @@ class UserDataAccessor(commands.Cog, GlobalCog):
     """Data and Statistics Module"""
 
     # class variables ----------- shared across all instances
-    EXTNAME = ".sqlite3"  # default db extension type
+    EXT_NAME = ".sqlite3"  # default db extension type
     FOLDER = "sqlite_dbs"  # default self.FOLDER name
     NUMERIC_UPPER_BOUND = 5.0e7  # (50,000,000)
 
@@ -213,11 +213,11 @@ class UserDataAccessor(commands.Cog, GlobalCog):
             makedirs(isdir_path)
 
         # return full file path
-        return os_join(isdir_path, gid + self.EXTNAME)
+        return os_join(isdir_path, gid + self.EXT_NAME)
 
         # OLD IMPLEMENTATION:
         # return os_join(os_dirname(self.get_currdir()),
-        #                    self.FOLDER, gid + self.EXTNAME)
+        #                    self.FOLDER, gid + self.EXT_NAME)
 
     def db_exists(self, gid: str) -> bool:
         """
@@ -1377,10 +1377,11 @@ class UserDataAccessor(commands.Cog, GlobalCog):
             return
 
         msg = (
-            "Welcome welcome, my beloved new member! I'm ***{}*** from the EdenGenesis community "
-            ":innocent: \n\nThank you so much for joining us! Now first thing's first, "
-            "we need to get you **verified.** \n\n__Follow "
-            "the steps in our `#rules` channel__ so we can give you **full access** to the community!"
+            "Welcome welcome, my beloved new member! I'm ***{}*** :innocent:\n\n"
+            "Thank you so much for joining us! Now first thing's first, "
+            "we need to get you **verified.** \n\n"
+            "__Follow the steps in our `#rules` channel__ so we can give you "
+            "**full access** to the community!"
             "\n\n\n__Example introductions:__\n"
             "> - briefly talk about what you want to improve on\n"
             "> - briefly talk about your interests (drawing, references, or other)\n"
@@ -1394,56 +1395,6 @@ class UserDataAccessor(commands.Cog, GlobalCog):
         await asyncio.sleep(delay)
         await user.send(embed=embed)
 
-    # def get_zone_init_instructions(self):
-    # '''
-    # Return specific instructions on what zones NEED to be set
-    # for the bot(s) to work properly.
-    # '''
-    # msg =   'Hi! Please designate the following zones in your server by using the command '
-    # '`!designate <zone_name>` **in** the text channel that you '
-    # 'want a given zone to be for. \n\nMember auto-verification will **not**'
-    # ' work if the `introductions` and `rules` zones are not designated. '
-    # 'For now, please do not try '
-    # 'designating (2) zones to the same text channel.\n\nBelow are '
-    # 'the zones you MUST designate for core bot processes '
-    # '(for Kaede & Yoshimura) to function properly:\n> '
-
-    # # get list of mandatory zones to designate
-    # mandatory_zones = []
-    # append = mandatory_zones.append
-    # for zone,pri in self.zone_priorities.items():
-    # if pri == 0: append( zone )
-
-    # msg +=  '-> ' + '\n> -> '.join( mandatory_zones )
-    # return msg
-
-    # async def init_instructions_for_owner(self, guild):
-    # '''
-    # Pre-defined routine to execute when the bot(s) first enter the guild.
-    # '''
-    # # prepare reminder msg to properly designate
-    # # mandatory "zones" for bot functionality
-    # zone_msg = self.get_zone_init_instructions()
-    # req_server_info = f'*(requesting server: __{guild.name}__ ({guild.id}))*'
-    # more_details = ' __Below are **all** zones you can/should set:__\n'
-
-    # # prep an embed containing list of designation zones
-    # zone_embed = discord.Embed(
-    # title='DESIGNATION ZONES (for text channels)',
-    # description=self.strfmt_zones(str(guild.id)),
-    # colour=0xffc02e)
-
-    # # send message to bot owner
-    # info = await self.bot.application_info()
-    # bot_owner = info.owner
-    # sent1 = await bot_owner.send( '\n\n'.join([zone_msg, req_server_info, more_details]) )
-    # await sent1.reply( embed=zone_embed )
-
-    # if bot_owner.id != guild.owner.id:
-    # # send message to server owner
-    # sent2 = await guild.owner.send( zone_msg + '\n\n' + more_details )
-    # await sent2.reply( embed=zone_embed )
-    # #await sent.add_reaction( emojis.get( emojis.encode(':regional_indicator_z:') ) )
 
     """================================"""
     """STUFF FOR                       """
@@ -1861,7 +1812,8 @@ class UserDataAccessor(commands.Cog, GlobalCog):
         """
         Helper method for saving userdata files.
 
-        NOTE: this routine currently uses the `shutil` built-in Python library for copying userdata file(s).
+        NOTE: this routine currently uses the `shutil` built-in Python
+        library for copying userdata file(s).
         """
         for file in os.listdir(os_join(os.getcwd(), self.FOLDER)):
 
@@ -1873,7 +1825,7 @@ class UserDataAccessor(commands.Cog, GlobalCog):
                 timestamp = datetime.datetime.now(timezone.utc)
 
                 # build new filename to save;
-                # name scheme is: "{guild_id}{"
+                # name scheme: "{guild_id} {datetime}.sqlite3.backup"
                 f = file[: file.find(self.EXT_NAME)]
                 f += timestamp.strftime(" %Y:%m:%d-%H:%M:%S-%Z") + ".backup"
                 fname = os_join(self.FOLDER, f)
