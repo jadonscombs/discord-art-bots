@@ -8,9 +8,8 @@ An integral part of many of these bots' features is the use of a locally maintai
 ## High-Level Application Architecture
 Below you will find a high-level overview of the core components of this application. I will add more detailed diagrams over time, to provide visualizations of processes involving specific integral components within the generally defined components in this diagram below.
 
-![aaa](https://raw.githubusercontent.com/jadonscombs/discord-art-bots/blob/main/DiscordBotsHighLevelArchitecture1.png)
+![aaa](https://raw.githubusercontent.com/jadonscombs/discord-art-bots/main/DiscordBotsHighLevelArchitecture1.png)
 
-&nbsp;
 ## Quick Start
 Follow the steps below to deploy these two friendly, community-oriented Discord bots.
 
