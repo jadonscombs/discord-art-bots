@@ -10,6 +10,9 @@ Below you will find a high-level overview of the core components of this applica
 
 ![aaa](https://raw.githubusercontent.com/jadonscombs/discord-art-bots/main/DiscordBotsHighLevelArchitecture1.png)
 
+This architecture was designed with simplicity and maintainability in mind, for current and future contributors and team members.
+
+&nbsp;
 ## Quick Start
 Follow the steps below to deploy these two friendly, community-oriented Discord bots.
 
