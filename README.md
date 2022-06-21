@@ -1,9 +1,14 @@
 [![CircleCI](https://circleci.com/gh/Jtheowl/discord-EGbot.svg?style=shield&circle-token=de715f375b3a6b4788f9cb094ffbccba0713f925)](https://circleci.com/gh/Jtheowl/discord-EGbot)
 ## Introduction
-Kaede and Yoshimura are two personalized bots that work together in offering a variety of features and enhancements, tailored towards art communities. Kaede is more friendly and mostly has social and user-centric features/responsibilities, while Yoshimura handles more backend, data collection and processing responsibilities.
+Kaede and Yoshimura are two personalized Discord bots that work together in offering a variety of features and enhancements, tailored towards art communities. Kaede is more friendly and mostly has social and user-centric features/responsibilities, while Yoshimura handles more backend, data collection and processing responsibilities.
 
 An integral part of many of these bots' features is the use of a locally maintained SQLite3 **database**. Some features can work without it, **others require it** for you and your (art) community to experience non-limited functionality and features.
 
+&nbsp;
+## High-Level Application Architecture
+Below you will find a high-level overview of the core components of this application. I will add more detailed diagrams over time, to provide visualizations of processes involving specific integral components within the generally defined components in this diagram below.
+
+![aaa](https://raw.githubusercontent.com/jadonscombs/discord-art-bots/blob/main/DiscordBotsHighLevelArchitecture1.png)
 
 &nbsp;
 ## Quick Start
