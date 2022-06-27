@@ -75,6 +75,32 @@ def get_links(s):
     Returns a list of URLs found in string.
     """
     return re.findall(r"(https?://\S+)", s)
+    
+    
+def stream_stopped(prev, curr):
+    """
+    Helper method for the on_voice_state_update event;
+    Returns True if user's <curr> and <prev> voice states
+    indicate they recently stopped streaming.
+    """
+    
+    return (
+        (not curr.self_stream and prev.self_stream) or
+        (curr.self_stream and not curr.channel)
+    )
+
+    
+def stream_started(prev, curr):
+    """
+    Helper method for the on_voice_state_update event;
+    Returns True if user's <curr> and <prev> voice states
+    indicate they recently started streaming.
+    """
+    
+    return (
+        (curr.self_stream and (prev.self_stream != curr.self_stream)) and
+        ((prev.channel is None) or (prev.channel == curr.channel))
+    )
 
 
 @limits(calls=10, period=1.0)

@@ -7,6 +7,7 @@ import traceback
 import typing
 from cogs.globalcog import GlobalCog
 from constants import roles
+from utils.sync_utils import stream_started, stream_stopped
 
 
 class PointSystem(commands.Cog, GlobalCog):
@@ -14,10 +15,11 @@ class PointSystem(commands.Cog, GlobalCog):
     Functionality for K/Y's custom point system.
     """
 
-    # WIP: integrate an "Achievements" system/component.
+    # TODO: integrate an "Achievements" system/component.
 
     def __init__(self, bot):
         self.bot = bot
+
 
     # EVENT LISTENER: stream points
     @commands.Cog.listener()
@@ -27,13 +29,58 @@ class PointSystem(commands.Cog, GlobalCog):
         prev: discord.VoiceState,
         curr: discord.VoiceState
     ):
-        pass
+        """
+        Event handler to award points based on voice channel activity.
+        """
+        
+        time_now = datetime.datetime.now()
+        
+        # proceed if user stopped streaming, otherwise return
+        if not self.stream_stopped(prev, curr):
+            return
+
+        # retrieve user data accessor module
+        # or raise exception if None
+        uda = self.bot.get_cog("UserDataAccessor")
+        if uda is None:
+            raise RuntimeError(
+                "[on_voice_state_update] error: UserDataAccessor "
+                "could not be retrieved."
+            )
+
+        # get most recent stream "live" time, and stream "end" time
+        last_went_live = uda.get_last_live_time(member)
+        last_went_live = datetime.datetime.strptime(
+            last_went_live, "%m/%d/%Y %H:%M:%S"
+        )
+
+        # check if time since last going live is "significant"
+        # enough to give a stats update and points
+        live_time_diff = time_now - last_went_live
+        total_secs = live_time_diff.total_seconds()
+
+        if total_secs > 60:
+            
+            # convert collected stream time to minutes
+            total_mins = round(total_sec / 60, 1)
+            
+            # add stream time to the users' stats
+            uda.update(
+                "add", total_mins, "total_time_streamed", None, member=member
+            )
+            uda.update(
+                "add", 1, "num_times_streamed", None, member=member
+            )
+
+        # award points for streaming
+        uda.award_stream_points(total, member)
+        
 
     # EVENT LISTENER: on_message
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
         """
-        Main event listener for ON_MESSAGE events (+ parsing messages).
+        Event handler called for message events.
         """
         
         # do not proceed if action issuer is bot
@@ -70,7 +117,7 @@ class PointSystem(commands.Cog, GlobalCog):
     @commands.Cog.listener()
     async def on_raw_reaction_add(self, payload):
         """
-        Main event listener for REACTION_ADD events.
+        Event handler called for reaction add events.
         """
 
         # do not proceed if action issuer is bot
@@ -90,6 +137,7 @@ class PointSystem(commands.Cog, GlobalCog):
         except:
             traceback.print_exc()
 
+            
     async def award_server_boost_points(
         self, message: discord.Message, points: float = 45.0
     ):
@@ -100,7 +148,7 @@ class PointSystem(commands.Cog, GlobalCog):
         2. (attempt to) give points to user
 
 
-        Note: See <points> keyword arg value for default award amount.
+        Note: See <points> kwarg value for default award amount.
         """
 
         uda = self.bot.get_cog("UserDataAccessor")
@@ -132,10 +180,8 @@ class PointSystem(commands.Cog, GlobalCog):
         uda = self.bot.get_cog("UserDataAccessor")
         if uda is None:
             print(
-                (
-                    "[point_system] ERROR: UDA is None. "
-                    "Could not give SERVER BOOST points."
-                )
+                "[point_system] ERROR: UDA is None. "
+                "Could not give SERVER BOOST points."
             )
             return False
 
@@ -159,6 +205,7 @@ class PointSystem(commands.Cog, GlobalCog):
         msg_point_info = "\nWe added :euro:{points} to your wallet!"
         await success_msg.edit(content=f"{success_msg.content}{msg_point_info}")
 
+        
     # ART-SHARING LOGIC -- insert into "on_message"
     #   - check: is art_gallery zone?
     #   - check: has an embed (image and/or video)?
@@ -174,7 +221,8 @@ class PointSystem(commands.Cog, GlobalCog):
         uda = self.bot.get_cog("UserDataAccessor")
         if uda is None:
             print(
-                ("[point_system] ERROR: UDA is None. " "Could not give MESSAGE points.")
+                "[point_system] ERROR: UDA is None. "
+                "Could not give MESSAGE points."
             )
             return False
 
@@ -214,6 +262,7 @@ class PointSystem(commands.Cog, GlobalCog):
             return True
         return False
 
+        
     async def award_art_reaction_points(self, payload):
         """
         Award the author points for reactions on their artwork.
@@ -222,10 +271,10 @@ class PointSystem(commands.Cog, GlobalCog):
         """
 
         uda = self.bot.get_cog("UserDataAccessor")
-
         if uda is None:
             print(
-                ("[point_system] ERROR: UDA is None. " "Could not give MESSAGE points.")
+                "[point_system] ERROR: UDA is None. "
+                "Could not give ART REACTION points."
             )
             return False
 
@@ -300,7 +349,8 @@ class PointSystem(commands.Cog, GlobalCog):
 
         if uda is None:
             print(
-                ("[point_system] ERROR: UDA is None. " "Could not give MESSAGE points.")
+                "[point_system] ERROR: UDA is None. "
+                "Could not give MESSAGE points."
             )
             return False
 
@@ -357,10 +407,10 @@ class PointSystem(commands.Cog, GlobalCog):
             if uda:
                 uda.givepoints(message)
             else:
-                print((
+                print(
                     "[point_system] ERROR: UDA is None. "
                     "Could not give MESSAGE points."
-                ))
+                )
 
     # (method) ON_RAW_REACTION_ADD POINT AWARDING
     async def award_reaction_points(

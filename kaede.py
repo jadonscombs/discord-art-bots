@@ -239,9 +239,6 @@ async def on_voice_state_update(
     Called when there's an update in voice channel activity
     Currently, this event is used for the "!streamnotifs <on/off>" cmd
     """
-    # print('[voice update] truth tables:')
-    # print(f'\t>prev: stream={prev.self_stream}; connected={prev.channel}')
-    # print(f'\t>curr: stream={curr.self_stream}; connected={curr.channel}')
 
     # ======================= stream-related handling logic =======================
     # =========== logic for notifying users when someone goes LIVE ================
@@ -295,43 +292,6 @@ async def on_voice_state_update(
 
                 except:
                     traceback.print_exc()
-
-    # ============ LOGIC FOR UPDATING USER STREAM TIME ================
-    # >>>   this section aims to track user's *total* streaming time
-    #       when user STOPS streaming/going LIVE.
-    if (not curr.self_stream and prev.self_stream) or (
-        curr.self_stream and not curr.channel
-    ):
-        try:
-            # get most recent stream "live" time, and stream "end" time
-            time_now = datetime.datetime.now()
-            last_went_live = accessor.get_last_live_time(member)
-
-            last_went_live = datetime.datetime.strptime(
-                last_went_live, "%m/%d/%Y %H:%M:%S"
-            )
-
-            # print( f'last_went_live: {last_went_live}' )
-
-            # check if time delta is "significant" enough to record;
-            # this will record in minutes
-            diff = time_now - last_went_live
-            total = diff.total_seconds()
-
-            # print( f'seconds streamed: {total} ({total/60} mins.)' )
-
-            if total > 60:
-                t = round(total / 60, 1)
-                # add stream time to the users' stats
-                # stats: (num_times_streamed, total_time_streamed)
-                update("add", t, "total_time_streamed", None, member=member)
-                update("add", 1, "num_times_streamed", None, member=member)
-
-            # now award points for streaming (if applicable)
-            accessor.award_stream_points(total, member)
-
-        except:
-            traceback.print_exc()
 
 
 # !STARTING UP THE BOT!
