@@ -352,29 +352,84 @@ class UserDataAccessor(commands.Cog, GlobalCog):
         self.db_made = True
         print("All tables have been successfully created.")
 
-    def print_table(self, gid: str, uid: str = "N/A", table="udata"):
+        
+    def gather_user_stats(
+        self,
+        gid: str,
+        uid: str,
+        fields: list = None,
+        table: str = "udata"
+    ):
         """
-        Simple diagnostic to print contents of current db(gid)
+        Helper method for <print_table()>.
+        
+        Returns specific stats (<fields>) for the given user <uid>.
         """
+        
+        # establish user database connection
         with self.connect(gid) as conn:
             cur = conn.cursor()
-
-            # only print row if a <uid> given
-            if uid != "N/A":
-                cmd = f"SELECT * FROM {table} WHERE id=?"
-                cur.execute(cmd, (uid,))
+            
+            # construct fields to retrieve or use default fields;
+            # <fields> parameter must be non-empty and only
+            # contain string elements;
+            if (
+                isinstance(fields, list) and
+                all([isinstance(field, str) for field in fields])
+            ):
+                fields_str = ",".join(fields)
             else:
-                cmd = f"SELECT * FROM {table} LIMIT 100"
-                cur.execute(cmd)
-
-            rowdata = []
-            rowdata_append = rowdata.append
-            for row in cur.fetchall():
-                print(row)
-                rowdata_append(str(row))
-            print()
-
-            return "\n".join(rowdata)
+                fields = [
+                    "id",
+                    "username",
+                    "discrim",
+                    "points",
+                    "num_times_streamed",
+                    "total_time_streamed",
+                    "last_time_went_live"
+                ]
+                fields_str = ",".join(fields)
+            
+            # if supplied <uid> is empty or None, raise error
+            if not bool(uid):
+                raise ValueError(
+                    "[userdata_accessor.brief_stats] error: "
+                    "malformed user id <uid>"
+                )
+            
+            # retrieve fields from database for specified user ID
+            cmd = f"SELECT {fields_str} FROM {table} WHERE id=?"
+            cur.execute(cmd, (uid,))
+            result = cur.fetchone()
+            
+            # error-checking if fetched results are None
+            if result is None:
+                raise ValueError(
+                    "[userdata_accessor.brief_stats] error: "
+                    "retrieved fields is type None"
+                )
+            
+            # convert result to string (labels and values underneath) and return
+            result_dict = dict(zip(
+                fields,
+                [str(value) for value in list(result)]
+            ))
+            
+            result_str = ",\n".join(
+                ["{}: {}".format(k, v) for k,v in result_dict.items()]
+            )
+            return result_str
+        
+        
+    def print_table(self, gid: str, uid: str, table: str = "udata"):
+        """
+        Output helper method used by <on_message()> to display basic stats
+        of the message author.
+        """
+        
+        stats = self.gather_user_stats(gid, uid, table=table)
+        print(f"---\n\n{stats}\n\n---")
+        
 
     def ADD_COL(self, colname: str, coltype="text", gid: str = "all", table="udata"):
         """

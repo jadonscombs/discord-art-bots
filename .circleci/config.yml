@@ -22,6 +22,6 @@ jobs:
           name: run tests
           command: |
             . venv/bin/activate
-            black ./
-            flake8 ./ --exclude=venv* --statistics
+            black --exclude venv* ./
+            flake8 --exclude=venv* --statistics ./
             

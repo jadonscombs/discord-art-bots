@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 
+import datetime
 import asyncio
 import re
 import traceback
@@ -62,7 +63,7 @@ class PointSystem(commands.Cog, GlobalCog):
         if total_secs > 60:
             
             # convert collected stream time to minutes
-            total_mins = round(total_sec / 60, 1)
+            total_mins = round(total_secs / 60, 1)
             
             # add stream time to the users' stats
             uda.update(
@@ -73,7 +74,7 @@ class PointSystem(commands.Cog, GlobalCog):
             )
 
         # award points for streaming
-        uda.award_stream_points(total, member)
+        uda.award_stream_points(total_secs, member)
         
 
     # EVENT LISTENER: on_message
